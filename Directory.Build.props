@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <IsSupported>true</IsSupported>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+</Project>

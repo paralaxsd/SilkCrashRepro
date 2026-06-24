@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+
+  <!--
+  Please refer to https://github.com/dotnet/runtime/blob/main/src/mono/wasm/features.md
+  for more details on the available MSBuild properties and items for WASM projects.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework Condition="'$(TargetFramework)' == ''">net10.0</TargetFramework>
+    <IsSupported>true</IsSupported>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsWasmBuild>true</IsWasmBuild>
+    <DefineConstants>$(DefineConstants);WASM</DefineConstants>
+    <IsNet9OrGreater>$([MSBuild]::VersionGreaterThanOrEquals('$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)'))','9.0'))</IsNet9OrGreater>
+
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--
+    MSBuild Properties as defined and otherwise undocumented at:
+    https://github.com/dotnet/runtime/blob/main/src/mono/wasm/build/WasmApp.Common.targets
+    -->
+    <EmccFlags>-s FULL_ES3=1 -lGL -s</EmccFlags>
+    <WasmEmitSymbolMap>true</WasmEmitSymbolMap>
+    <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
+    <!-- Set true to build the native executable. Necessary for the WASM cache to even be populated. -->
+    <WasmBuildNative>true</WasmBuildNative>
+    <InvariantGlobalization>true</InvariantGlobalization>
+
+    <!--
+    If we don't set the PlatformTarget to AnyCPU here, newer SDKs will error out with:
+    "The RuntimeIdentifier platform 'browser-wasm' and the PlatformTarget 'x64' must be compatible."
+    WASM doesn't have a CPU architecture, so the PlatformTarget must be AnyCPU.
+    -->
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+    
+    <!-- Disable trimming to ensure all P/Invoke targets (EGL, GLES) are preserved -->
+    <PublishTrimmed>true</PublishTrimmed>
+  </PropertyGroup>
+
+  <!-- This is set up such, that during Builds of Burnside the output folder if neatly tagged away.
+  However, after being set up for publishing, the OutputPath must not be customized at all.
+  If it is, the site can no longer be debugged or launched at all from Visual Studio -->
+  <PropertyGroup Condition="'$(IsWasmBuild)' != 'true'">
+    <OutputPath>$(OutputPath)Burnside.Packages.Vibe.WasmPlayer/</OutputPath>
+    <OutDir>$(OutputPath)</OutDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <NativeFileReference Include="Native/libEGL.c" ScanForPInvokes="true" />
+    <NativeFileReference Include="Native/openal32.c" ScanForPInvokes="true" />
+    <NativeFileReference Include="Native/emscripten.c" ScanForPInvokes="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Silk.NET.OpenGLES" />
+    <TrimmableAssembly Include="Silk.NET.Maths" />
+  </ItemGroup>
+
+</Project>
